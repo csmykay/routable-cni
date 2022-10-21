@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dnsutils-1
+  annotations:
+    k8s.v1.cni.cncf.io/networks: '[{
+        "name" : "macvlan-static",
+        "interface" : "net0",
+        "ips" : ["16.143.22.232/26"]
+      },
+      {
+        "name" : "routable-cni"
+      }
+    ]'
+spec:
+  containers:
+  - name: dnsutils-1
+    image: bluedata/dnsutils:1.0
+    command:
+      - sleep
+      - "3600"
+    imagePullPolicy: IfNotPresent
+  restartPolicy: Always
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dnsutils-2
+  annotations:
+    k8s.v1.cni.cncf.io/networks: '[
+      {
+        "name" : "macvlan-static",
+        "interface" : "net0",
+        "ips" : ["16.143.22.248/26"]
+      },
+      {
+        "name" : "routable-cni"
+      }
+    ]'
+spec:
+  containers:
+  - name: dnsutils-1
+    image: bluedata/dnsutils:1.0
+    command:
+      - sleep
+      - "3600"
+    imagePullPolicy: IfNotPresent
+  restartPolicy: Always
