@@ -1,0 +1,67 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: routable-cni-cm
+  namespace: kube-system
+data:
+  net-conf.json: |
+    {
+      "cniVersion": "0.3.1",
+      "name": "routable-cni",
+      "type": "routable-cni"
+    }
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: routable-cni-ds
+  namespace: kube-system
+  labels:
+    k8s-app: routable-cni
+spec:
+  selector:
+    matchLabels:
+      k8s-app: routable-cni
+  template:
+    metadata:
+      labels:
+        k8s-app: routable-cni
+    spec:
+      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: routable-cni
+          image: RELEASE_IMAGE_TAG
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "50Mi"
+            limits:
+              cpu: "100m"
+              memory: "50Mi"
+          volumeMounts:
+            - name: bin-cni
+              mountPath: /host/opt/cni/bin
+            - name: etc-cni
+              mountPath: /host/etc/cni/net.d
+            - name: config-volume
+              mountPath: /config/
+      volumes:
+        - name: bin-cni
+          hostPath:
+            path: /opt/cni/bin
+        - name: etc-cni
+          hostPath:
+            path: /etc/cni/net.d
+        - name: config-volume
+          configMap:
+            defaultMode: 0444
+            name: routable-cni-cm
